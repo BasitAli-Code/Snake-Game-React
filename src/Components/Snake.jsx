@@ -6,14 +6,17 @@ const Snake = ({ body, cellSize }) => {
       {body.map((segment, index) => (
         <div
           key={index}
-          className="absolute bg-cyan-400 rounded-sm shadow-[0_0_8px_rgba(0,255,255,0.7)]"
+          className="absolute bg-green-500 rounded-sm"
           style={{
-            left: segment.x * cellSize,
-            top: segment.y * cellSize,
-            width: cellSize,
-            height: cellSize,
+            width: `${cellSize}px`,
+            height: `${cellSize}px`,
+            left: `${segment.x * cellSize}px`,
+            top: `${segment.y * cellSize}px`,
+            borderRadius: index === 0 ? "50%" : "2px",
+            backgroundColor: index === 0 ? "#4ade80" : "#22c55e",
+            zIndex: 10,
           }}
-        ></div>
+        />
       ))}
     </>
   );

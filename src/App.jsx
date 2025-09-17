@@ -1,37 +1,67 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import ScoreBoard from "./Components/ScoreBoard";
 import GameBoard from "./Components/GameBoard";
 import ArrowControls from "./Components/ArrowButtons";
 
 const App = () => {
   const [score, setScore] = useState(0);
+  const [highScore, setHighScore] = useState(() => {
+    return parseInt(localStorage.getItem("highScore")) || 0;
+  });
   const [gameOver, setGameOver] = useState(false);
   const [snake, setSnake] = useState([{ x: 8, y: 10 }]);
   const [direction, setDirection] = useState("RIGHT");
   const [food, setFood] = useState({ x: 5, y: 5 });
+  const boardSize = 20;
 
-  const boardSize = 20; // Grid size
+  const generateFood = useCallback(() => {
+    let newFood;
+    do {
+      newFood = {
+        x: Math.floor(Math.random() * boardSize),
+        y: Math.floor(Math.random() * boardSize),
+      };
+    } while (snake.some(segment => segment.x === newFood.x && segment.y === newFood.y));
+    return newFood;
+  }, [snake, boardSize]);
 
-  // Restart game
-  const handleRestart = () => {
+  const handleRestart = useCallback(() => {
     setScore(0);
     setGameOver(false);
-    setSnake([{ x: 8, y: 10 }]);
+    const initialSnake = [{ x: 8, y: 10 }];
+    setSnake(initialSnake);
     setDirection("RIGHT");
-    setFood({ x: Math.floor(Math.random() * boardSize), y: Math.floor(Math.random() * boardSize) });
-  };
 
-  // Keyboard controls
+    let newFood;
+    do {
+      newFood = {
+        x: Math.floor(Math.random() * boardSize),
+        y: Math.floor(Math.random() * boardSize),
+      };
+    } while (initialSnake.some(segment => segment.x === newFood.x && segment.y === newFood.y));
+
+    setFood(newFood);
+  }, [boardSize]);
+
   useEffect(() => {
     const handleKey = (e) => {
+      if (gameOver) return;
+
       if (e.key === "ArrowUp" && direction !== "DOWN") setDirection("UP");
-      if (e.key === "ArrowDown" && direction !== "UP") setDirection("DOWN");
-      if (e.key === "ArrowLeft" && direction !== "RIGHT") setDirection("LEFT");
-      if (e.key === "ArrowRight" && direction !== "LEFT") setDirection("RIGHT");
+      else if (e.key === "ArrowDown" && direction !== "UP") setDirection("DOWN");
+      else if (e.key === "ArrowLeft" && direction !== "RIGHT") setDirection("LEFT");
+      else if (e.key === "ArrowRight" && direction !== "LEFT") setDirection("RIGHT");
     };
+
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [direction]);
+  }, [direction, gameOver]);
+
+  useEffect(() => {
+    if (snake.some(segment => segment.x === food.x && segment.y === food.y)) {
+      setFood(generateFood());
+    }
+  }, [snake, food, generateFood]);
 
   return (
     <div className="flex flex-col items-center min-h-screen bg-gray-900 p-4">
@@ -39,13 +69,17 @@ const App = () => {
         🐍 Snake Game
       </h1>
 
-      <ScoreBoard score={score} onRestart={handleRestart} />
+      <ScoreBoard 
+        score={score} 
+        highScore={highScore} 
+        onRestart={handleRestart} 
+      />
+
 
       <GameBoard
         snake={snake}
         setSnake={setSnake}
         direction={direction}
-        setDirection={setDirection}
         food={food}
         setFood={setFood}
         gameOver={gameOver}
@@ -54,7 +88,7 @@ const App = () => {
         setScore={setScore}
       />
 
-      <ArrowControls onDirectionChange={setDirection} />
+      <ArrowControls onDirectionChange={setDirection} gameOver={gameOver} />
     </div>
   );
 };
